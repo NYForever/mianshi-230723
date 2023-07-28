@@ -239,3 +239,46 @@
 > 4. **灵活的配置选项**：`ThreadPoolTaskExecutor`提供了更多的配置选项，比如队列容量、拒绝策略、线程前缀等。它还支持线程池的预热和优雅关闭等功能，使得线程池的配置更加灵活和易用。
 > 
 > 尽管`ThreadPoolTaskExecutor`提供了更高级的功能和更易用的配置选项，但在某些情况下，可能需要直接使用`ThreadPoolExecutor`来满足特定的需求，尤其是对于一些复杂或自定义的线程池需求。
+
+- 12.如何自定义 线程池的拒绝策略吗
+> 
+> 要自定义线程池的拒绝策略，你可以按照以下步骤进行操作：
+> 
+> 1. 创建一个实现了 `RejectedExecutionHandler` 接口的类。该接口有一个方法 `rejectedExecution()`，该方法在任务被拒绝时被调用。
+> 
+> ```java
+> public class CustomRejectedExecutionHandler implements RejectedExecutionHandler {
+>     @Override
+>     public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+>         // 在此处编写自定义的拒绝策略逻辑
+>     }
+> }
+> ```
+> 
+> 2. 在创建线程池时，使用这个自定义的拒绝策略类来初始化线程池。
+> 
+> ```
+> int corePoolSize = 10;
+> int maxPoolSize = 20;
+> long keepAliveTime = 5000;
+> BlockingQueue<Runnable> workQueue = new ArrayBlockingQueue<>(100);
+> RejectedExecutionHandler rejectedExecutionHandler = new CustomRejectedExecutionHandler();
+> 
+> ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime,
+>         TimeUnit.MILLISECONDS, workQueue, rejectedExecutionHandler);
+> ```
+> 
+> 3. 在 `rejectedExecution()` 方法中，实现自己的拒绝策略逻辑。例如，你可以记录日志、抛出异常或者根据具体需求做其他处理。
+> 
+> 下面是一个示例，展示如何在任务被拒绝时打印一条日志信息：
+> 
+> ```
+> public class CustomRejectedExecutionHandler implements RejectedExecutionHandler {
+>     @Override
+>     public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+>         System.out.println("Task " + r.toString() + " has been rejected");
+>     }
+> }
+> ```
+> 
+> 通过这种方式，你可以自定义线程池的拒绝策略来满足你的特定需求。

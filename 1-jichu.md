@@ -112,18 +112,19 @@ for (Integer key : linkedHashMap.keySet()) {
 
 - 3.ConcurrentHashMap是怎么实现线程安全的
 ```
-`ConcurrentHashMap` 的线程安全是通过以下几个关键点来实现的：
+ConcurrentHashMap是通过以下几个机制来实现线程安全性的：
 
-1. 分段锁（Segment）：`ConcurrentHashMap` 内部被分成多个段，每个段维护了一个独立的小型哈希表。不同的线程可以同时访问和修改不同的段，以提高并发性能。每个段都有自己的锁，因此线程在访问时只需要获取对应段的锁而不需要锁住整个 `ConcurrentHashMap`，从而减小了锁的粒度。
+1. 分段锁（Segment锁）：ConcurrentHashMap内部将数据结构分成多个Segment（段），每个Segment都相当于一个小的HashMap，它们独立地承担一部分数据和并发访问负载。每个Segment都拥有自己的锁，并且不同的线程可以同时访问或修改不同的Segment，从而提供更高的并发性。
 
-2. CAS（Compare and Swap）操作：`ConcurrentHashMap` 使用 CAS 操作来实现无阻塞的并发控制。CAS 是一种乐观锁机制，它比较当前值与期望值是否相等，如果相等则更新为新值，如果不相等则重新尝试。这样可以避免传统的互斥锁带来的线程阻塞和上下文切换开销。
+2. volatile修饰符：ConcurrentHashMap中的一些关键字段使用volatile修饰符进行声明。这样其它线程在访问这些字段时可以看到最新的值，避免了数据的不一致性。
 
-3. 线程安全的操作：在 `ConcurrentHashMap` 中，读取操作（如 get）可以无锁地进行，并且不会引入并发问题。对于写入操作（如 put、remove）以及更新操作（如 putIfAbsent、replace、compute），需要获取对应段的锁来保证线程安全性。
+3. CAS（Compare-and-Swap）操作：ConcurrentHashMap使用CAS操作来保证对数据的原子性操作。CAS操作是一种乐观锁策略，在无锁竞争的情况下进行操作，只有在检查到数据没有被修改的情况下才会进行更新，否则会重试。
 
-4. 安全迭代器：`ConcurrentHashMap` 的迭代器（Iterator）是弱一致性的。这意味着迭代器在迭代开始时反映了初始状态，并且可能会看到其他线程进行的更新操作，但不保证能获取到最新的写入结果。这样可以避免在迭代过程中抛出 `ConcurrentModificationException` 异常。
+4. 使用synchronized块：ConcurrentHashMap在某些必要的操作上使用synchronized块来保证线程安全。例如，在进行扩容操作或者执行特定的方法时，使用synchronized块确保只有一个线程可以执行这些操作。
 
-通过上述机制，`ConcurrentHashMap` 实现了高效的并发访问和修改操作。它允许多个线程同时读取数据，并且在保证线程安全的前提下进行并行的写入和更新操作。分段锁减小了锁的粒度，CAS 操作避免了阻塞和上下文切换开销，以及对读取操作的无锁优化，使得 `ConcurrentHashMap` 能够在多线程环境下提供高性能的并发操作。
+通过以上机制的组合，ConcurrentHashMap能够实现高度的并发性和线程安全性。不同的线程可以同时对不同的Segment进行访问和修改，从而提供更好的性能。此外，ConcurrentHashMap还提供了一些原子操作和并发迭代器等功能，进一步增强了其在多线程环境下的安全性和性能。
 ```
+
 - 4.ConcurrentHashMap一共分了多少Segment，并发线程数超过Segment会发生什么
 ```
 `ConcurrentHashMap` 的初始时会根据指定的并发级别（concurrency level）或默认值创建多个初始段（segments）。每个段相当于一个独立的小型哈希表，用于存储键值对。
@@ -137,4 +138,23 @@ for (Integer key : linkedHashMap.keySet()) {
 为了避免这种情况，可以考虑增加 `ConcurrentHashMap` 的初始段数，以适应更高的并发线程数。另外，也可以使用其他并发数据结构如 `ConcurrentSkipListMap` 或者使用分布式缓存系统来满足更高的并发需求。
 
 总结起来，`ConcurrentHashMap` 的初始段数默认为16，它可以支持多线程并发访问和修改。如果并发线程数超过了段数，仍然可以正常工作，但可能会出现锁争用导致性能下降的情况。在高并发环境中，可以通过调整并发级别或考虑其他并发数据结构来提高性能和并发能力。
+```
+
+- 5.HashMap哪些情况下是线程不安全的
+```
+HashMap在以下情况下是线程不安全的：
+
+1. 并发访问和修改：当多个线程同时访问或修改HashMap时，可能会导致数据不一致或丢失。这是因为HashMap不提供内部的同步机制来保护对其数据结构的并发访问。
+
+2. 修改迭代器：如果一个线程正在迭代HashMap的元素，而另一个线程同时修改了HashMap的结构（比如添加或删除元素），则会触发"fail-fast"机制，抛出`ConcurrentModificationException`异常。
+
+3. 扩容操作：当HashMap需要进行扩容时，会重新分配存储空间，并将原有元素重新计算哈希值并放入新的存储位置。在扩容期间，如果其他线程访问HashMap并进行修改操作，可能会导致数据丢失或错误。
+
+为了在多线程环境中使用HashMap，可以采取以下措施：
+
+- 使用`ConcurrentHashMap`类：它是Java提供的线程安全的哈希表实现，具有更好的并发性能。
+- 使用锁或同步块：在并发访问HashMap时，通过使用显示锁或同步块来确保只有一个线程可以访问或修改HashMap。
+- 使用`Collections.synchronizedMap()`方法：该方法返回一个线程安全的Map对象，对于大多数场景足够使用，但在高度并发的情况下性能可能较差。
+
+总之，如果需要在多线程环境中使用HashMap，应该采取适当的措施来保证线程安全性。
 ```
