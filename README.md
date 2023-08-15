@@ -58,6 +58,14 @@ RocketMQ的rebalance机制采用Push模式将重新分配的消息队列信息�
 
 需要注意的是，RocketMQ的rebalance机制是由Broker节点上的RebalanceService线程进行协调和执行的，而不是像Kafka那样由中心化的协调器节点。这种设计使得RocketMQ具有更好的可扩展性和容错性，因为rebalance操作与具体的Broker节点紧密结合，并且在整个集群中进行分布式执行。
 ```
+- 4.kafka和rocketmq的区别
+> 1.吞吐量，kafka支持百万级别，rocketmq支持10万级别
+> 2.消息失败重试，kafka不支持，rocketmq支持
+> 3.分布式事务消息，kafka不支持，rocketmq支持
+> 4.broker端消息过滤Tag，kafka不支持，rocketmq支持
+> 5.延时消息，kafka不支持，rocketmq支持
+> 6.服务发现，kafka用zk，rocketmq自己实现nameSrv
+> 7.消息存储，kafka基于topic存储不同的文件，rocketmq所有文件都存储在commitlog中，使用consumeQueue文件索引不同的topic文件
 
 ### kafka
 - 1.kafka是怎么保证高可用的，讲讲他的设计架构，为什么读写都在主分区，有什么优缺点
@@ -279,3 +287,4 @@ Apollo 是一个开源的分布式配置中心，用于实现配置的集中管�
 
 需要注意的是，设计一个完美的哈希函数往往是不可能的，因为它涉及到复杂的数学和算法问题。在实际应用中，可以根据具体场景和需求选择现有的哈希函数（如 MD5、SHA-1、CRC32等）或者根据以上原则自行设计。此外，还可以使用一些哈希函数生成器工具来辅助设计和评估哈希函数的性能和效果。
 ```
+- 3.一个数字文件10G，jvm内存只有100m，怎么能对文件里的数字进行排序
